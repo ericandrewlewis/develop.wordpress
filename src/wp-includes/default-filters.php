@@ -477,4 +477,7 @@ add_filter( 'the_excerpt_embed',      'wp_embed_excerpt_attachment'           );
 add_filter( 'oembed_dataparse',       'wp_filter_oembed_result',        10, 3 );
 add_filter( 'oembed_response_data',   'get_oembed_response_data_rich',  10, 4 );
 
+// Meta
+add_action( 'plugins_loaded', '_wp_initialize_meta_manager', 0 );
+
 unset( $filter, $action );
