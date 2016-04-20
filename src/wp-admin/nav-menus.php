@@ -57,16 +57,22 @@ if ( isset( $_POST['nav-menu-data'] ) ) {
 	$data = json_decode( stripslashes( $_POST['nav-menu-data'] ) );
 	if ( ! is_null( $data ) && $data ) {
 		foreach ( $data as $post_input_data ) {
-			// For input names that are arrays (e.g. `menu-item-db-id[3]`), derive the array path keys via regex.
-			if ( preg_match( '#(.*)\[(\w+)\]#', $post_input_data->name, $matches ) ) {
-				if ( empty( $_POST[ $matches[1] ] ) ) {
-					$_POST[ $matches[1] ] = array();
+			// For input names that are arrays (e.g. `menu-item-db-id[3][4][5]`), derive the array path keys via regex.
+			if ( preg_match( '#([^\[]*)\[(.+)\]#', $post_input_data->name, $matches ) ) {
+				$array_bits = explode( '][', $matches[2] );
+				$_new_data = array();
+				for ( $i = count($array_bits) - 1; $i >= 0; $i -- ) {
+					if ( $i == count($array_bits) - 1 ) {
+						$_new_data[ $array_bits[$i] ] = wp_slash( $post_input_data->value );
+					} else {
+						$_i = array();
+						$_i[ $array_bits[$i] ] = $_new_data;
+						$_new_data = $_i;
+					}
 				}
-				// Cast input elements with a numeric array index to integers.
-				if ( is_numeric( $matches[2] ) ) {
-					$matches[2] = (int) $matches[2];
-				}
-				$_POST[ $matches[1] ][ $matches[2] ] = wp_slash( $post_input_data->value );
+				$new_data = array();
+				$new_data[$matches[1]] = $_new_data;
+				$_POST = array_merge_recursive( $_POST, $new_data );
 			} else {
 				$_POST[ $post_input_data->name ] = wp_slash( $post_input_data->value );
 			}
