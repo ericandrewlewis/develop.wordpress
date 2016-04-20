@@ -113,10 +113,11 @@ final class WP_Meta_Manager {
 			$args['object_subtype'] = 'all';
 		}
 
-		$this->{$args['object_type']}[$args['object_subtype']][$args['key']] = array(
-			'public' => $args['public'],
-			'schema' => $args['schema'],
-		);
+		$meta_data = new StdClass;
+		$meta_data->public = $args['public'];
+		$meta_data->schema = $args['schema'];
+
+		$this->{$args['object_type']}[$args['object_subtype']][$args['key']] = $meta_data;
 
 		return true;
 	}
