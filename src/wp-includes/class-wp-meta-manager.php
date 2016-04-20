@@ -76,8 +76,8 @@ final class WP_Meta_Manager {
 	 *
 	 * @since 4.6.0
 	 *
-	 * @param array $query {
-	 *     Array of meta data properties.
+	 * @param array|object $query {
+	 *     Array or object of meta data properties.
 	 *
 	 *     @type string $object_type  The meta type this key belongs to, e.g. `post`.
 	 *     @type string $object_subtype The meta subtype this key belongs to, e.g. `page`.
@@ -87,37 +87,36 @@ final class WP_Meta_Manager {
 	 * @return true|WP_Error
 	 */
 	public function register( $args ) {
-		if ( empty( $args['object_type'] ) ) {
+		if ( ! is_object( $args ) ) {
+			$args = (object) $args;
+		}
+		if ( empty( $args->object_type ) ) {
 			return new WP_Error( 'missing_object_type', __( 'The object type is required to register meta.' ) );
 		}
-		if ( ! property_exists( $this, $args['object_type'] ) ) {
+		if ( ! property_exists( $this, $args->object_type ) ) {
 			return new WP_Error( 'object_type_does_not_exist', __( sprintf( 'The object type "%s" does not exist.', esc_html( $args['object_type'] ) ) ) );
 		}
-		if ( ! empty( $args['object_subtype'] ) && ! isset( $this->{$args['object_type']}[$args['object_subtype'] ] ) ) {
+		if ( ! empty( $args->object_subtype ) && ! isset( $this->{$args->object_type}[ $args->object_subtype ] ) ) {
 			return new WP_Error( 'meta_subtype_does_not_exist', __( 'The meta subtype does not exist in the registry.' ) );
 		}
 
-		if ( empty( $args['key'] ) ) {
+		if ( empty( $args->key ) ) {
 			return new WP_Error( 'meta_key_required', __( 'The meta key is required.' ) );
 		}
 
-		if ( ! isset( $args['schema'] ) ) {
+		if ( ! isset( $args->schema ) ) {
 			return new WP_Error( 'schema_required', __( 'The JSON schema for the meta key is required.' ) );
 		}
 
-		if ( ! isset( $args['public'] ) ) {
+		if ( ! isset( $args->public ) ) {
 			return new WP_Error( 'public_required', __( 'The public argument is required to register meta.' ) );
 		}
 
-		if ( empty( $args['object_subtype'] ) ) {
-			$args['object_subtype'] = 'all';
+		if ( empty( $args->object_subtype ) ) {
+			$args->object_subtype = 'all';
 		}
 
-		$meta_data = new StdClass;
-		$meta_data->public = $args['public'];
-		$meta_data->schema = $args['schema'];
-
-		$this->{$args['object_type']}[$args['object_subtype']][$args['key']] = $meta_data;
+		$this->{$args->object_type}[ $args->object_subtype ][ $args->key ] = $args;
 
 		return true;
 	}
