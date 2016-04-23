@@ -597,14 +597,14 @@ class WP_Meta_Query {
 			switch ( $meta_compare ) {
 				case 'IN' :
 				case 'NOT IN' :
-					$meta_compare_string = '(' . substr( str_repeat( ',%s', count( $meta_value ) ), 1 ) . ')';
+					$meta_compare_string = '(' . substr( str_repeat( ',CAST(%s AS $meta_type)', count( $meta_value ) ), 1 ) . ')';
 					$where = $wpdb->prepare( $meta_compare_string, $meta_value );
 					break;
 
 				case 'BETWEEN' :
 				case 'NOT BETWEEN' :
 					$meta_value = array_slice( $meta_value, 0, 2 );
-					$where = $wpdb->prepare( '%s AND %s', $meta_value );
+					$where = $wpdb->prepare( 'CAST(%s AS $meta_type) AND CAST(%s AS $meta_type)', $meta_value );
 					break;
 
 				case 'LIKE' :
@@ -625,14 +625,22 @@ class WP_Meta_Query {
 					break;
 
 				default :
-					$where = $wpdb->prepare( '%s', $meta_value );
+					$where = $wpdb->prepare( "CAST(%s AS $meta_type)", $meta_value );
 					break;
 
 			}
 
 			if ( $where ) {
-				$sql_chunks['where'][] = "CAST($alias.meta_value AS {$meta_type}) {$meta_compare} {$where}";
+				// var_dump( "$alias.meta_value {$meta_compare} {$where}" );
+				// die;
+				global $x;
+				if ( $x ) {
+					// var_dump("$alias.meta_value {$meta_compare} {$where}" );
+					// die;
+				}
+				$sql_chunks['where'][] = "$alias.meta_value {$meta_compare} {$where}";
 			}
+
 		}
 
 		/*
