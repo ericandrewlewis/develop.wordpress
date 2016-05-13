@@ -87,7 +87,6 @@ final class WP_Meta_Manager {
 	 * @type string        $object_type    The meta type this key belongs to, e.g. `post`.
 	 * @type string        $object_subtype The meta subtype this key belongs to, e.g. `page`.
 	 * @type string        $key            The meta key.
-	 * @type array         $schema         The meta field's schema, according to JSON schema.
 	 * @type array         $public         Whether the meta key should be publicly queryable.
 	 * @return true|WP_Error
 	 */
@@ -97,7 +96,6 @@ final class WP_Meta_Manager {
 			'object_type'           => null,
 			'object_subtype'        => null,
 			'key'                   => null,
-			'schema'                => false,
 			'public'                => false,
 			'show_in_rest'          => false,
 			'sanitize_callback'     => null,
@@ -141,10 +139,6 @@ final class WP_Meta_Manager {
 
 		if ( empty( $args->key ) ) {
 			return new WP_Error( 'meta_key_required', __( 'The meta key is required.' ) );
-		}
-
-		if ( ! isset( $args->schema ) ) {
-			return new WP_Error( 'schema_required', __( 'The JSON schema for the meta key is required.' ) );
 		}
 
 		if ( ! isset( $args->public ) ) {

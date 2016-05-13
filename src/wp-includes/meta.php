@@ -997,7 +997,6 @@ function sanitize_meta( $meta_key, $meta_value, $object_type, $object_subtype = 
  *     @type string   $auth_callback     Optional. A function or method to call when performing edit_post_meta,
  *                                       add_post_meta, and delete_post_meta capability checks.
  *     @type bool     $public            Whether data associated with this meta key can be considered public.
- *     @type array    $schema            The meta field's schema, according to JSON schema.
  * }
  * @return true|WP_Error
  */
