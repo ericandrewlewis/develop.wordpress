@@ -87,7 +87,7 @@ final class WP_Meta_Manager {
 	 * @type string        $object_type    The meta type this key belongs to, e.g. `post`.
 	 * @type string        $object_subtype The meta subtype this key belongs to, e.g. `page`.
 	 * @type string        $key            The meta key.
-	 * @type array         $public         Whether the meta key should be publicly queryable.
+	 * @type array         $protected      Whether the meta key can be publicly queryable.
 	 * @return true|WP_Error
 	 */
 	public function register( $args ) {
@@ -96,7 +96,7 @@ final class WP_Meta_Manager {
 			'object_type'           => null,
 			'object_subtype'        => null,
 			'key'                   => null,
-			'public'                => false,
+			'protected'             => true,
 			'show_in_rest'          => false,
 			'sanitize_callback'     => null,
 			'old_sanitize_callback' => null,
@@ -141,8 +141,8 @@ final class WP_Meta_Manager {
 			return new WP_Error( 'meta_key_required', __( 'The meta key is required.' ) );
 		}
 
-		if ( ! isset( $args->public ) ) {
-			return new WP_Error( 'public_required', __( 'The public argument is required to register meta.' ) );
+		if ( ! isset( $args->protected ) ) {
+			return new WP_Error( 'protected_required', __( 'The protected argument is required to register meta.' ) );
 		}
 
 		if ( empty( $args->object_subtype ) ) {
