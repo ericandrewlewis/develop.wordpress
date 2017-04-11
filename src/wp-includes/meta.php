@@ -996,103 +996,45 @@ function sanitize_meta( $meta_key, $meta_value, $object_type, $object_subtype = 
  *     @type string   $sanitize_callback A function or method to call when sanitizing `$meta_key` data.
  *     @type string   $auth_callback     Optional. A function or method to call when performing edit_post_meta,
  *                                       add_post_meta, and delete_post_meta capability checks.
- *     @type bool     $public            Whether data associated with this meta key can be considered public.
- *     @type array    $schema            The meta field's schema, according to JSON schema.
+ *     @type bool     $protected         Whether data associated with this meta key can be considered protected.
  * }
  * @return true|WP_Error
  */
 function register_meta( $object_type, $meta_key, $args ) {
-	global $wp_meta_manager;
-	// @todo validate object type as post, comment, user, term?
 
-	// @todo should this be an object similar to post types?
-	$args = array(
-		'sanitize_callback' => null,
-		'old_sanitize_callback' => null,
-		'auth_callback' => null,
-		'old_auth_callback' => null,
-		'object_subtype' => '',
-		'public' => false,
-		'schema' => false,
+	global $wp_meta_manager;
+
+	$defaults = array(
+		'object_type' => $object_type,
+		'key'         => $meta_key,
 	);
 
-	$passed_args = array_slice( func_get_args(), 2 );
+	$passed_args = func_get_args();
 
-	if ( is_callable( $passed_args[0] ) ) {
-		$args['old_sanitize_callback'] = $passed_args[0];
-	} elseif ( isset( $passed_args[0]['sanitize_callback'] ) ) {
-		$args['sanitize_callback'] = $passed_args[0]['sanitize_callback'];
+	// Backwards compatibility for sanitize_callback
+	if ( is_callable( $passed_args[2] ) ) {
+		// Handle the old sanitize_callback callable argument
+		$defaults['old_sanitize_callback'] = $passed_args[2];
+
+		// No args passed
+		$args = array();
 	}
 
-	if ( isset( $passed_args[1] ) && is_callable( $passed_args[1] ) ) {
-		$args['old_auth_callback'] = $passed_args[1];
-	} elseif ( isset( $passed_args[0]['auth_callback'] ) ) {
-		$args['auth_callback'] = $passed_args[0]['auth_callback'];
+	// Backwards compatibility for auth_callback
+	if ( isset( $passed_args[3] ) && is_callable( $passed_args[3] ) ) {
+		$defaults['old_auth_callback'] = $passed_args[3];
 	}
 
-	// @todo is there more than one condition here? What if show_in_rest is true, but the
-	// user fails authentication. No schema?
-	if ( isset( $passed_args[0]['show_in_rest'] ) && $passed_args[0]['show_in_rest'] ) {
-		$args['show_in_rest'] = true;
-	}
-
-	if ( isset( $passed_args[0]['type'] ) ) {
-		$args['type'] = $passed_args[0]['type'];
-	}
-
-	if ( isset( $passed_args[0]['description'] ) ) {
-		$args['description'] = $passed_args[0]['description'];
-	}
-
-	// @todo validate object sub types to only those objects that support custom object types?
-	if ( isset( $passed_args[0]['object_subtype'] ) ) {
-		$object_subtype = $passed_args[0]['object_subtype'];
+	if ( $args && is_array( $args ) ) {
+		// Merge passed $args array with defaults
+		$args = array_merge( $defaults, $args );
 	} else {
-		$object_subtype = 'all';
+		// No $args passed, use defaults
+		$args = $defaults;
 	}
 
-	$error = $wp_meta_manager->register( array(
-		'object_type' => $object_type,
-		'object_subtype' => $object_subtype,
-		'key' => $meta_key,
-		'public' => $args['public'],
-		'schema' => $args['schema'],
-	) );
+	return $wp_meta_manager->register( $args );
 
-	if ( is_wp_error( $error ) ) {
-		return $error;
-	}
-
-	// This legacy filter will fire for all subtypes of an object type.
-	if ( is_callable( $args['old_sanitize_callback'] ) ) {
-		add_filter( "sanitize_{$object_type}_meta_{$meta_key}", $args['old_sanitize_callback'], 10, 3 );
-	}
-
-	if ( is_callable( $args['sanitize_callback'] ) ) {
-		add_filter( "sanitize_{$object_type}_{$object_subtype}_meta_{$meta_key}", $args['sanitize_callback'], 10, 4 );
-	}
-
-	// If neither new or legacy `auth_callback` is provided, fallback to `is_protected_meta()`.
-	if ( empty( $args['auth_callback'] ) && empty( $args['old_auth_callback'] ) ) {
-		if ( is_protected_meta( $meta_key, $object_type ) ) {
-			$args['auth_callback'] = '__return_false';
-		} else {
-			$args['auth_callback'] = '__return_true';
-		}
-	}
-
-	// @todo the only core application of this filter is for the `post` object type. What about users, comments, terms?
-	// The auth here is to edit or add meta, not to view.
-	if ( is_callable( $args['old_auth_callback'] ) ) {
-		add_filter( "auth_{$object_type}_meta_{$meta_key}", $args['old_auth_callback'], 10, 6 );
-	}
-
-	// @todo sort above out before going further
-	if ( is_callable( $args['auth_callback'] ) ) {
-		add_filter( "auth_{$object_type}_{$object_subtype}_meta_{$meta_key}", $args['auth_callback'], 10, 7 );
-	}
-
-	return true;
 }
 
 /**
